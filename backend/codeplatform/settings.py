@@ -82,6 +82,12 @@ WSGI_APPLICATION = 'codeplatform.wsgi.application'
 #   mysql -u root -p
 #   CREATE DATABASE codeplatform_db CHARACTER SET utf8mb4;
 #
+# Added lines to print the database configuration values for debugging purposes
+print("DB_NAME =", config("DB_NAME", default="NOT_FOUND"))
+print("DB_HOST =", config("DB_HOST", default="NOT_FOUND"))
+print("DB_USER =", config("DB_USER", default="NOT_FOUND"))
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
