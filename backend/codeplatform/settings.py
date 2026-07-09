@@ -115,7 +115,12 @@ TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
+# --------------------------------------------------------------------------
+# STATIC FILES
+# --------------------------------------------------------------------------
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = []
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -138,10 +143,12 @@ SIMPLE_JWT = {
 }
 
 # --------------------------------------------------------------------------
-# CORS (allow the React dev server to talk to Django)
+# CORS
 # --------------------------------------------------------------------------
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-]
+CORS_ALLOWED_ORIGINS = config(
+    "CORS_ORIGINS",
+    default="http://localhost:3000",
+    cast=lambda v: [s.strip() for s in v.split(",")]
+)
+
 CORS_ALLOW_CREDENTIALS = True
