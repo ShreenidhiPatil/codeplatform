@@ -5,6 +5,7 @@ Django settings for codeplatform project.
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -97,8 +98,10 @@ WSGI_APPLICATION = "codeplatform.wsgi.application"
 # --------------------------------------------------------------------------
 
 DATABASES = {
-    "default": dj_database_url.config(
-        default=config("DATABASE_URL")
+    "default": dj_database_url.parse(
+        config("DATABASE_URL"),
+        conn_max_age=600,
+        ssl_require=True,
     )
 }
 
