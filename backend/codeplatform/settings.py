@@ -25,12 +25,10 @@ ALLOWED_HOSTS = config(
     cast=lambda v: [host.strip() for host in v.split(",")]
 )
 
-CSRF_TRUSTED_ORIGINS = config(
-    "CSRF_TRUSTED_ORIGINS",
-    default="https://codeplatform.onrender.com,https://codeplatform-1.onrender.com",
-    cast=lambda v: [origin.strip() for origin in v.split(",")]
-)
-
+CSRF_TRUSTED_ORIGINS = [
+    "https://codeplatform.onrender.com",
+    "https://codeplatform-1.onrender.com",
+]
 # --------------------------------------------------------------------------
 # APPLICATIONS
 # --------------------------------------------------------------------------
