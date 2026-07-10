@@ -6,9 +6,6 @@ from pathlib import Path
 from datetime import timedelta
 from decouple import config
 
-import pymysql
-pymysql.install_as_MySQLdb()
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --------------------------------------------------------------------------
@@ -25,7 +22,13 @@ DEBUG = config("DEBUG", default=False, cast=bool)
 ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS",
     default="localhost,127.0.0.1",
-    cast=lambda v: [s.strip() for s in v.split(",")]
+    cast=lambda v: [host.strip() for host in v.split(",")]
+)
+
+CSRF_TRUSTED_ORIGINS = config(
+    "CSRF_TRUSTED_ORIGINS",
+    default="https://codeplatform.onrender.com,https://codeplatform-1.onrender.com",
+    cast=lambda v: [origin.strip() for origin in v.split(",")]
 )
 
 # --------------------------------------------------------------------------
@@ -40,9 +43,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    "corsheaders",
     "rest_framework",
     "rest_framework_simplejwt",
-    "corsheaders",
 
     "accounts",
     "questions",
@@ -57,8 +60,8 @@ AUTH_USER_MODEL = "accounts.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -95,8 +98,6 @@ WSGI_APPLICATION = "codeplatform.wsgi.application"
 # DATABASE
 # --------------------------------------------------------------------------
 
-
-
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -107,6 +108,7 @@ DATABASES = {
         "PORT": config("DB_PORT"),
     }
 }
+
 # --------------------------------------------------------------------------
 # PASSWORD VALIDATION
 # --------------------------------------------------------------------------
