@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// >>> Change this if your Django backend runs on a different host/port <<<
-export const BASE_URL = 'http://localhost:8000/api';
+// Render Django Backend URL
+export const BASE_URL = 'https://codeplatform.onrender.com/api';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -9,9 +9,11 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = sessionStorage.getItem('access_token');
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   return config;
 });
 
@@ -20,14 +22,23 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
+
       const refresh = sessionStorage.getItem('refresh_token');
+
       if (refresh) {
         try {
-          const res = await axios.post(`${BASE_URL}/auth/login/refresh/`, { refresh });
+          const res = await axios.post(
+            `${BASE_URL}/auth/login/refresh/`,
+            { refresh }
+          );
+
           sessionStorage.setItem('access_token', res.data.access);
+
           originalRequest.headers.Authorization = `Bearer ${res.data.access}`;
+
           return api(originalRequest);
         } catch (e) {
           sessionStorage.clear();
@@ -35,6 +46,7 @@ api.interceptors.response.use(
         }
       }
     }
+
     return Promise.reject(error);
   }
 );
