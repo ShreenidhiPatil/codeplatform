@@ -185,8 +185,8 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ORIGINS",
-    default="http://localhost:3000",
-    cast=lambda v: [s.strip() for s in v.split(",")],
+    default="https://codeplatform-1.onrender.com",
+    cast=lambda v: [origin.strip() for origin in v.split(",")],
 )
 
 CORS_ALLOW_CREDENTIALS = True
