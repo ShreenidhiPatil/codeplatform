@@ -29,6 +29,32 @@ export default function FacultyDashboard() {
     setLeaderboard(res.data);
   }, []);
 
+  const downloadLeaderboard = async () => {
+    if (!lbQuestionId) {
+      alert("Please select a question first.");
+      return;
+    }
+
+    try {
+      const response = await api.get(
+        `/submissions/leaderboard/download/?question=${lbQuestionId}`,
+        {
+          responseType: "blob",
+        }
+      );
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "leaderboard.xlsx";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      alert("Unable to download leaderboard.");
+    }
+  };
+
   const loadViolations = useCallback(async () => {
     const res = await api.get('/submissions/violations/');
     setViolations(res.data);
@@ -260,24 +286,41 @@ export default function FacultyDashboard() {
           </div>
         </>
       )}
+{view === 'leaderboard' && (
+  <>
+    <div
+      className="dashboard-header-row"
+      style={{
+        alignItems: 'center',
+        marginTop: '1rem',
+        gap: '10px',
+      }}
+    >
+      <h3 className="section-title" style={{ margin: 0 }}>
+        Leaderboard
+      </h3>
 
-      {view === 'leaderboard' && (
-        <>
-          <div className="dashboard-header-row" style={{ alignItems: 'center', marginTop: '1rem' }}>
-            <h3 className="section-title" style={{ margin: 0 }}>Leaderboard</h3>
-            <select
-              className="select-control"
-              value={lbQuestionId}
-              onChange={(e) => setLbQuestionId(e.target.value)}
-              style={{ maxWidth: 320 }}
-            >
-              <option value="">Overall (all questions)</option>
-              {questions.map((q) => (
-                <option key={q.id} value={q.id}>{q.title}</option>
-              ))}
-            </select>
-          </div>
+      <select
+        className="select-control"
+        value={lbQuestionId}
+        onChange={(e) => setLbQuestionId(e.target.value)}
+        style={{ maxWidth: 320 }}
+      >
+        <option value="">Overall (all questions)</option>
+        {questions.map((q) => (
+          <option key={q.id} value={q.id}>
+            {q.title}
+          </option>
+        ))}
+      </select>
 
+      <button
+        className="btn btn-primary"
+        onClick={downloadLeaderboard}
+      >
+        Download Excel
+      </button>
+    </div>
           {leaderboard.rows.length === 0 ? (
             <p className="empty-state">No accepted submissions yet.</p>
           ) : leaderboard.scope === 'question' ? (
