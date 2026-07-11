@@ -11,6 +11,8 @@ from .models import Submission
 from .serializers import SubmissionCreateSerializer, SubmissionResultSerializer
 from .code_runner import run_against_test_cases, DEFAULT_TIME_LIMIT_SECONDS
 
+from openpyxl import Workbook
+from django.http import HttpResponse
 
 def _get_or_create_attempt(student, question):
     attempt, _ = QuestionAttempt.objects.get_or_create(student=student, question=question)
@@ -353,3 +355,61 @@ class LeaderboardView(APIView):
             row['rank'] = i
 
         return Response({'scope': 'overall', 'rows': rows})
+
+class DownloadLeaderboardExcelView(APIView):
+    permission_classes = [IsFacultyOrAdmin]
+
+    def get(self, request):
+        question_id = request.query_params.get("question")
+
+        if not question_id:
+            return Response(
+                {"detail": "Question ID is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        submissions = (
+            Submission.objects
+            .filter(question_id=question_id)
+            .select_related("student", "question")
+            .order_by("-passed_count", "submitted_at")
+        )
+
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Leaderboard"
+
+        sheet.append([
+            "Rank",
+            "Student",
+            "Roll Number",
+            "Passed Test Cases",
+            "Total Test Cases",
+            "Status",
+            "Submitted Time",
+        ])
+
+        rank = 1
+        for submission in submissions:
+            sheet.append([
+                rank,
+                submission.student.username,
+                submission.student.roll_number,
+                submission.passed_count,
+                submission.total_count,
+                submission.status,
+                submission.submitted_at.strftime("%d-%m-%Y %H:%M"),
+            ])
+            rank += 1
+
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+        response["Content-Disposition"] = (
+            f'attachment; filename="leaderboard_question_{question_id}.xlsx"'
+        )
+
+        workbook.save(response)
+
+        return response

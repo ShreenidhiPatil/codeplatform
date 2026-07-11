@@ -1,7 +1,15 @@
 from django.urls import path
+from openpyxl import Workbook
+from django.http import HttpResponse
 from .views import (
-    SubmitCodeView, MySubmissionsView, LeaderboardView, RunCodeView, AutoSubmitView,
-    ViolationsListView, UnlockAttemptView,
+    SubmitCodeView,
+    MySubmissionsView,
+    LeaderboardView,
+    DownloadLeaderboardExcelView,
+    RunCodeView,
+    AutoSubmitView,
+    ViolationsListView,
+    UnlockAttemptView,
 )
 
 urlpatterns = [
@@ -12,4 +20,6 @@ urlpatterns = [
     path('leaderboard/', LeaderboardView.as_view(), name='leaderboard'),
     path('violations/', ViolationsListView.as_view(), name='violations'),
     path('violations/unlock/', UnlockAttemptView.as_view(), name='unlock_attempt'),
+    path('leaderboard/', LeaderboardView.as_view(), name='leaderboard'),
+    path('leaderboard/download/',DownloadLeaderboardExcelView.as_view(),name='download_leaderboard_excel'),
 ]
