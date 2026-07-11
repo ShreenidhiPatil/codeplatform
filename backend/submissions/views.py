@@ -381,6 +381,7 @@ class DownloadLeaderboardExcelView(APIView):
 
         sheet.append([
             "Rank",
+            "Question",
             "Student",
             "Roll Number",
             "Passed Test Cases",
