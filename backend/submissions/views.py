@@ -394,8 +394,8 @@ class DownloadLeaderboardExcelView(APIView):
         for submission in submissions:
             sheet.append([
                 rank,
-                submission.student.username,
                 submission.question.title,
+                submission.student.username,
                 submission.student.roll_number,
                 submission.passed_count,
                 submission.total_count,
