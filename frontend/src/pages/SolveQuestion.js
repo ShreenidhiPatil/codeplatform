@@ -5,7 +5,7 @@ import CodeEditor from '../components/CodeEditor';
 
 const STARTER = {
   python: '# Write your Python solution here\n# Read input with input() and print() your answer\n\n',
-  cpp: '#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n',
+  c: '#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n',
 };
 
 const CONFETTI_COLORS = ['#f43f5e', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#06b6d4', '#eab308'];
@@ -318,7 +318,7 @@ export default function SolveQuestion() {
           <div className="editor-toolbar">
             <select value={language} onChange={(e) => handleLanguageChange(e.target.value)}>
               <option value="python">Python 3</option>
-              <option value="cpp">C++</option>
+              <option value="c">C</option>
             </select>
           </div>
 
