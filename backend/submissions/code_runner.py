@@ -14,6 +14,7 @@ project. Execution uses a subprocess timeout to stop infinite loops. For a
 production system you would want a properly isolated sandbox (Docker,
 gVisor, seccomp, resource limits, etc.) - see README for notes on this.
 """
+import re
 import subprocess
 import sys
 import tempfile
@@ -71,24 +72,34 @@ def _run_cpp(code, stdin_data, time_limit):
 
 def _run_java(code, stdin_data, time_limit):
     with tempfile.TemporaryDirectory() as tmpdir:
-        src_path = os.path.join(tmpdir, "Main.java")
+        # javac requires the source file name to match the public class name.
+        # The editor's starter template uses `public class Main`, but detect
+        # the actual class name so a differently-named class still compiles.
+        match = re.search(r'public\s+class\s+(\w+)', code) or re.search(r'class\s+(\w+)', code)
+        class_name = match.group(1) if match else 'Main'
+        src_path = os.path.join(tmpdir, f"{class_name}.java")
 
         with open(src_path, "w") as f:
             f.write(code)
 
-        compile_result = subprocess.run(
-            ["javac", src_path],
-            capture_output=True,
-            text=True,
-            timeout=15,
-        )
+        try:
+            compile_result = subprocess.run(
+                ["javac", src_path],
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+        except subprocess.TimeoutExpired:
+            return None, "Compilation Error:\nCompilation timed out."
+        except FileNotFoundError:
+            return None, "Java compiler (javac) is not installed on the server."
 
         if compile_result.returncode != 0:
             return None, f"Compilation Error:\n{compile_result.stderr[-2000:]}"
 
         try:
             result = subprocess.run(
-                ["java", "-cp", tmpdir, "Main"],
+                ["java", "-cp", tmpdir, class_name],
                 input=stdin_data,
                 capture_output=True,
                 text=True,
@@ -102,6 +113,8 @@ def _run_java(code, stdin_data, time_limit):
 
         except subprocess.TimeoutExpired:
             return None, "Time Limit Exceeded"
+        except FileNotFoundError:
+            return None, "Java runtime (java) is not installed on the server."
 
 RUNNERS = {
     'python': _run_python,

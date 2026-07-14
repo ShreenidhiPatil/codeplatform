@@ -6,6 +6,7 @@ import CodeEditor from '../components/CodeEditor';
 const STARTER = {
   python: '# Write your Python solution here\n# Read input with input() and print() your answer\n\n',
   c: '#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n',
+  java: 'public class Main {\n    public static void main(String[] args) {\n        // Write your solution here\n    }\n}\n',
 };
 
 const CONFETTI_COLORS = ['#f43f5e', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#06b6d4', '#eab308'];

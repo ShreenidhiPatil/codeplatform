@@ -22,7 +22,7 @@ export default function CodeEditor({ value, onChange, language, onBlockedAction 
     <div className="code-editor-wrapper">
       <div className="code-editor-topbar">
         <span className="dot red" /><span className="dot yellow" /><span className="dot green" />
-        <span className="code-editor-lang">{language === 'python' ? 'solution.py' : 'solution.cpp'}</span>
+        <span className="code-editor-lang">{language === 'python' ? 'solution.py' : language === 'java' ? 'Main.java' : 'solution.cpp'}</span>
       </div>
       <textarea
         className="code-editor"
