@@ -12,7 +12,7 @@ class Submission(models.Model):
     )
     LANGUAGE_CHOICES = (
         ('python', 'Python 3'),
-        ('cpp', 'C++'),
+        ('c', 'C'),
     )
 
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='submissions')
