@@ -19,6 +19,12 @@ def _get_or_create_attempt(student, question):
     return attempt
 
 
+def _already_solved(student, question):
+    """Once a student has an Accepted submission, the question is completed:
+    they may keep practising it with no deadline, lock, or violation rules."""
+    return Submission.objects.filter(student=student, question=question, status='Accepted').exists()
+
+
 def _deadline_expired(attempt, question):
     if not question.duration_minutes:
         return False
@@ -58,12 +64,13 @@ class SubmitCodeView(APIView):
             return Response({'detail': 'This question has been disabled by faculty.'}, status=status.HTTP_403_FORBIDDEN)
 
         attempt = _get_or_create_attempt(request.user, question)
-        if attempt.locked:
+        solved = _already_solved(request.user, question)
+        if attempt.locked and not solved:
             return Response(
                 {'detail': 'This question is locked after a tab-switch violation. You cannot submit again.'},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        if _deadline_expired(attempt, question):
+        if not solved and _deadline_expired(attempt, question):
             return Response(
                 {'detail': 'Time limit for this question has expired. Submission rejected.'},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -108,12 +115,13 @@ class RunCodeView(APIView):
             return Response({'detail': 'This question has been disabled by faculty.'}, status=status.HTTP_403_FORBIDDEN)
 
         attempt = _get_or_create_attempt(request.user, question)
-        if attempt.locked:
+        solved = _already_solved(request.user, question)
+        if attempt.locked and not solved:
             return Response(
                 {'detail': 'This question is locked after a tab-switch violation.'},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        if _deadline_expired(attempt, question):
+        if not solved and _deadline_expired(attempt, question):
             return Response(
                 {'detail': 'Time limit for this question has expired.'},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -156,6 +164,11 @@ class AutoSubmitView(APIView):
         reason = request.data.get('reason', 'tab_switch')[:50]
 
         attempt = _get_or_create_attempt(request.user, question)
+        if _already_solved(request.user, question):
+            # Solved questions are in practice mode - leaving the page is not
+            # a violation, so record nothing and do not lock.
+            return Response({'detail': 'Question already solved - no violation recorded.', 'solved': True},
+                            status=status.HTTP_200_OK)
         if attempt.locked:
             # Already locked by an earlier violation - just report that state back.
             return Response({'detail': 'Question already locked.', 'locked': True}, status=status.HTTP_200_OK)
