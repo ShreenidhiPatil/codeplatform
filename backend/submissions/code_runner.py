@@ -73,6 +73,7 @@ def _run_cpp(code, stdin_data, time_limit):
 RUNNERS = {
     'python': _run_python,
     'cpp': _run_cpp,
+    'c': _run_cpp,
 }
 
 
