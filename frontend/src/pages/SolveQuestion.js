@@ -319,6 +319,7 @@ export default function SolveQuestion() {
             <select value={language} onChange={(e) => handleLanguageChange(e.target.value)}>
               <option value="python">Python 3</option>
               <option value="c">C</option>
+              <option value="java">Java</option>
             </select>
           </div>
 

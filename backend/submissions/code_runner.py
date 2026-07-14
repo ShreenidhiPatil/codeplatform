@@ -69,11 +69,45 @@ def _run_cpp(code, stdin_data, time_limit):
         except subprocess.TimeoutExpired:
             return None, 'Time Limit Exceeded'
 
+def _run_java(code, stdin_data, time_limit):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        src_path = os.path.join(tmpdir, "Main.java")
+
+        with open(src_path, "w") as f:
+            f.write(code)
+
+        compile_result = subprocess.run(
+            ["javac", src_path],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+
+        if compile_result.returncode != 0:
+            return None, f"Compilation Error:\n{compile_result.stderr[-2000:]}"
+
+        try:
+            result = subprocess.run(
+                ["java", "-cp", tmpdir, "Main"],
+                input=stdin_data,
+                capture_output=True,
+                text=True,
+                timeout=time_limit,
+            )
+
+            if result.returncode != 0:
+                return None, result.stderr[-2000:]
+
+            return result.stdout, None
+
+        except subprocess.TimeoutExpired:
+            return None, "Time Limit Exceeded"
 
 RUNNERS = {
     'python': _run_python,
     'cpp': _run_cpp,
     'c': _run_cpp,
+    'java':_run_java,
 }
 
 
