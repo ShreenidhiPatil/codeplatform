@@ -392,18 +392,20 @@ form input:focus, form textarea:focus, form select:focus {
   border-radius: 999px;
 }
 .limit-pill-danger { background: #fee2e2; color: var(--danger); }
-.timer-topbar {
+.timer-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   background: #eef0ff;
   color: var(--primary-dark);
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  text-align: center;
-  padding: 0.6rem 1rem;
+  padding: 0.45rem 0.9rem;
   border-radius: 10px;
-  margin-bottom: 1.2rem;
+  margin-bottom: 1rem;
 }
-.timer-topbar-danger { background: #fee2e2; color: var(--danger); }
-.timer-topbar-solved { background: #dcfce7; color: #15803d; }
+.timer-banner-danger { background: #fee2e2; color: var(--danger); }
+.timer-banner-solved { background: #dcfce7; color: #15803d; }
 .sample-block {
   background: #f4f4fb;
   padding: 0.7rem 0.9rem;

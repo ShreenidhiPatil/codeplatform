@@ -291,18 +291,17 @@ export default function SolveQuestion() {
         </Link>
       )}
 
-      {solved ? (
-        <div className="timer-topbar timer-topbar-solved">
-          ✅ Solved — practice mode: no timer, no violations. Run and submit freely.
-        </div>
-      ) : question.duration_minutes > 0 && remainingMs !== null && (
-        <div className={`timer-topbar ${timeExpired ? 'timer-topbar-danger' : ''}`}>
-          ⏱ {timeExpired ? 'Time is up' : `Time left: ${formatRemaining(remainingMs)}`}
-        </div>
-      )}
-
       <div className="solve-grid">
         <div className="question-panel" onCopy={blockCopy} onContextMenu={blockCopy}>
+          {solved ? (
+            <div className="timer-banner timer-banner-solved">
+              ✅ Solved — practice mode: run and submit freely
+            </div>
+          ) : question.duration_minutes > 0 && remainingMs !== null && (
+            <div className={`timer-banner ${timeExpired ? 'timer-banner-danger' : ''}`}>
+              ⏱ {timeExpired ? 'Time is up' : `Time left: ${formatRemaining(remainingMs)}`}
+            </div>
+          )}
           <div className="q-title-row">
             <h2>{question.title}</h2>
             <span className={`badge badge-${question.difficulty.toLowerCase()}`}>{question.difficulty}</span>
