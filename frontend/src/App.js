@@ -10,6 +10,7 @@ import StudentSignup from './pages/StudentSignup';
 import FacultySignup from './pages/FacultySignup';
 import AdminDashboard from './pages/AdminDashboard';
 import FacultyDashboard from './pages/FacultyDashboard';
+import FacultyTestQuestion from './pages/FacultyTestQuestion';
 import StudentDashboard from './pages/StudentDashboard';
 import SolveQuestion from './pages/SolveQuestion';
 
@@ -29,6 +30,9 @@ function App() {
           } />
           <Route path="/faculty" element={
             <ProtectedRoute role="faculty"><FacultyDashboard /></ProtectedRoute>
+          } />
+          <Route path="/faculty/test/:id" element={
+            <ProtectedRoute role="faculty"><FacultyTestQuestion /></ProtectedRoute>
           } />
           <Route path="/student" element={
             <ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>
