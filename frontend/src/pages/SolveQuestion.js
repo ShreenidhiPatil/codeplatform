@@ -9,6 +9,8 @@ const STARTER = {
   java: 'public class Main {\n    public static void main(String[] args) {\n        // Write your solution here\n    }\n}\n',
 };
 
+const LANGUAGE_LABELS = { python: 'Python 3', c: 'C', java: 'Java' };
+
 const CONFETTI_COLORS = ['#f43f5e', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#06b6d4', '#eab308'];
 
 function Confetti({ active }) {
@@ -89,9 +91,28 @@ export default function SolveQuestion() {
       setQuestion(res.data);
       if (res.data.locked) setLocked(true);
       if (res.data.solved) setSolved(true);
+      // LeetCode-style questions: the faculty provided per-language starter
+      // stubs - students only write the logic, never the input handling.
+      const tpls = res.data.code_templates || [];
+      if (tpls.length) {
+        const langs = tpls.map((t) => t.language);
+        const initial = langs.includes('python') ? 'python' : langs[0];
+        setLanguage(initial);
+        setCode(tpls.find((t) => t.language === initial)?.starter_code || '');
+      }
     });
     loadHistory();
   }, [id, loadHistory]);
+
+  // {language: starter_code} for this question; empty object = classic
+  // full-program mode using the built-in STARTER snippets.
+  const templates = useMemo(() => {
+    const map = {};
+    (question?.code_templates || []).forEach((t) => { map[t.language] = t.starter_code; });
+    return map;
+  }, [question]);
+  const templateMode = Object.keys(templates).length > 0;
+  const availableLanguages = templateMode ? Object.keys(templates) : Object.keys(STARTER);
 
   // The single "was this already triggered" guard, plus the actual auto-submit
   // call. Any tab-switch/blur/fullscreen-exit signal calls this - only the
@@ -180,7 +201,7 @@ export default function SolveQuestion() {
 
   const handleLanguageChange = (lang) => {
     setLanguage(lang);
-    setCode(STARTER[lang]);
+    setCode(templates[lang] ?? STARTER[lang] ?? '');
   };
 
   // Once solved, the timer no longer applies - the question stays open for practice.
@@ -341,10 +362,15 @@ export default function SolveQuestion() {
         <div className="editor-panel">
           <div className="editor-toolbar">
             <select value={language} onChange={(e) => handleLanguageChange(e.target.value)}>
-              <option value="python">Python 3</option>
-              <option value="c">C</option>
-              <option value="java">Java</option>
+              {availableLanguages.map((l) => (
+                <option key={l} value={l}>{LANGUAGE_LABELS[l] || l}</option>
+              ))}
             </select>
+            {templateMode && (
+              <span className="muted small">
+                Complete the function — input reading &amp; output printing are handled for you.
+              </span>
+            )}
           </div>
 
           <CodeEditor

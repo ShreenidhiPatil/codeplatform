@@ -32,6 +32,23 @@ def _deadline_expired(attempt, question):
     return timezone.now() > deadline
 
 
+def _compose_code(question, code, language):
+    """
+    If the question has a CodeTemplate for this language, the student only
+    wrote the logic (a function) - splice it into the hidden driver code at
+    the {{USER_CODE}} marker so the combined program does the stdin/stdout
+    work. Questions without a template run the student's code as-is.
+    """
+    tpl = question.code_templates.filter(language=language).first()
+    if not tpl or not tpl.driver_code.strip():
+        return code
+    if '{{USER_CODE}}' in tpl.driver_code:
+        return tpl.driver_code.replace('{{USER_CODE}}', code)
+    # No marker: treat the driver as a harness appended below the student's
+    # code (works for Python-style scripts).
+    return f"{code}\n\n{tpl.driver_code}"
+
+
 def _full_test_cases(question):
     test_cases = list(question.test_cases.all())
     if not test_cases:
@@ -78,7 +95,8 @@ class SubmitCodeView(APIView):
 
         test_cases = _full_test_cases(question)
         time_limit = question.time_limit_seconds or DEFAULT_TIME_LIMIT_SECONDS
-        verdict, detail, passed, total = run_against_test_cases(code, language, test_cases, time_limit)
+        verdict, detail, passed, total = run_against_test_cases(
+            _compose_code(question, code, language), language, test_cases, time_limit)
 
         submission = Submission.objects.create(
             student=request.user,
@@ -141,7 +159,8 @@ class RunCodeView(APIView):
             })
 
         time_limit = question.time_limit_seconds or DEFAULT_TIME_LIMIT_SECONDS
-        verdict, detail, passed, total = run_against_test_cases(code, language, test_cases, time_limit)
+        verdict, detail, passed, total = run_against_test_cases(
+            _compose_code(question, code, language), language, test_cases, time_limit)
         return Response({'status': verdict, 'result_detail': detail, 'passed_count': passed, 'total_count': total})
 
 
@@ -175,7 +194,8 @@ class AutoSubmitView(APIView):
 
         test_cases = _full_test_cases(question)
         time_limit = question.time_limit_seconds or DEFAULT_TIME_LIMIT_SECONDS
-        verdict, detail, passed, total = run_against_test_cases(code, language, test_cases, time_limit)
+        verdict, detail, passed, total = run_against_test_cases(
+            _compose_code(question, code, language), language, test_cases, time_limit)
 
         submission = Submission.objects.create(
             student=request.user,

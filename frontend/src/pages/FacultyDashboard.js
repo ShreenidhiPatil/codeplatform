@@ -1,10 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axios';
 
+const TEMPLATE_LANGUAGES = ['python', 'c', 'java'];
+
 const emptyQuestion = {
   title: '', description: '', difficulty: 'Easy', sample_input: '', sample_output: '',
   time_limit_seconds: 5, duration_minutes: 0, is_active: true,
   test_cases: [{ input_data: '', expected_output: '', is_hidden: false }],
+  code_templates: [],
 };
 
 export default function FacultyDashboard() {
@@ -97,6 +100,26 @@ export default function FacultyDashboard() {
     ...form, test_cases: form.test_cases.filter((_, i) => i !== idx),
   });
 
+  const handleTemplateChange = (idx, field, value) => {
+    const updated = [...form.code_templates];
+    updated[idx] = { ...updated[idx], [field]: value };
+    setForm({ ...form, code_templates: updated });
+  };
+
+  const addTemplate = () => {
+    const used = form.code_templates.map((t) => t.language);
+    const next = TEMPLATE_LANGUAGES.find((l) => !used.includes(l));
+    if (!next) return;
+    setForm({
+      ...form,
+      code_templates: [...form.code_templates, { language: next, starter_code: '', driver_code: '' }],
+    });
+  };
+
+  const removeTemplate = (idx) => setForm({
+    ...form, code_templates: form.code_templates.filter((_, i) => i !== idx),
+  });
+
   const resetForm = () => { setForm(emptyQuestion); setEditingId(null); setShowForm(false); };
 
   const handleSubmit = async (e) => {
@@ -128,6 +151,7 @@ export default function FacultyDashboard() {
       duration_minutes: q.duration_minutes ?? 0,
       is_active: q.is_active ?? true,
       test_cases: q.test_cases?.length ? q.test_cases : [{ input_data: '', expected_output: '', is_hidden: false }],
+      code_templates: q.code_templates ?? [],
     });
     setEditingId(q.id);
     setShowForm(true);
@@ -247,6 +271,55 @@ export default function FacultyDashboard() {
             </div>
           ))}
           <button type="button" className="btn btn-outline small" onClick={addTestCase}>+ Add test case</button>
+
+          <h4>Code Templates (optional — LeetCode style)</h4>
+          <p className="muted small">
+            Add a template per language and students only write the logic: they see and complete the
+            Starter code (a function stub), while your hidden Driver code reads the input, calls their
+            function, and prints the answer. Put <code>{'{{USER_CODE}}'}</code> in the driver where the
+            student's code should be inserted. Students can only pick languages you add here; leave
+            this empty to let students write the whole program themselves.
+          </p>
+          {form.code_templates.map((tpl, idx) => (
+            <div className="template-row" key={idx}>
+              <div className="template-row-head">
+                <select
+                  value={tpl.language}
+                  onChange={(e) => handleTemplateChange(idx, 'language', e.target.value)}
+                >
+                  {TEMPLATE_LANGUAGES.map((l) => (
+                    <option
+                      key={l}
+                      value={l}
+                      disabled={l !== tpl.language && form.code_templates.some((t) => t.language === l)}
+                    >
+                      {l === 'python' ? 'Python 3' : l === 'c' ? 'C' : 'Java'}
+                    </option>
+                  ))}
+                </select>
+                <button type="button" className="btn-icon" onClick={() => removeTemplate(idx)}>✕</button>
+              </div>
+              <textarea
+                placeholder={'Starter code shown to the student, e.g.\ndef solve(a, b):\n    # write your logic here\n    return 0'}
+                rows="4"
+                value={tpl.starter_code}
+                onChange={(e) => handleTemplateChange(idx, 'starter_code', e.target.value)}
+                required
+              />
+              <textarea
+                placeholder={'Hidden driver code, e.g.\n{{USER_CODE}}\n\na, b = map(int, input().split())\nprint(solve(a, b))'}
+                rows="4"
+                value={tpl.driver_code}
+                onChange={(e) => handleTemplateChange(idx, 'driver_code', e.target.value)}
+                required
+              />
+            </div>
+          ))}
+          {form.code_templates.length < TEMPLATE_LANGUAGES.length && (
+            <button type="button" className="btn btn-outline small" onClick={addTemplate}>
+              + Add language template
+            </button>
+          )}
 
           <button className="btn btn-primary full-width" style={{ marginTop: '1.2rem' }}>
             {editingId ? 'Update Question' : 'Publish Question'}

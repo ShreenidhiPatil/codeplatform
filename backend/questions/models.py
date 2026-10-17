@@ -52,3 +52,32 @@ class TestCase(models.Model):
 
     def __str__(self):
         return f"TestCase for {self.question.title}"
+
+
+class CodeTemplate(models.Model):
+    """
+    LeetCode-style templates: the student only writes the logic. They see and
+    edit `starter_code` (a function stub); on run/submit the backend splices
+    their code into the hidden `driver_code` (which reads stdin, calls the
+    function, and prints the answer) at the {{USER_CODE}} marker, then runs
+    the combined program against the test cases as usual.
+
+    Questions with no templates keep the classic behavior where students
+    write the whole program including input handling.
+    """
+    LANGUAGE_CHOICES = (
+        ('python', 'Python 3'),
+        ('c', 'C'),
+        ('java', 'Java'),
+    )
+
+    question = models.ForeignKey(Question, related_name='code_templates', on_delete=models.CASCADE)
+    language = models.CharField(max_length=20, choices=LANGUAGE_CHOICES)
+    starter_code = models.TextField(blank=True, default='')
+    driver_code = models.TextField(blank=True, default='')
+
+    class Meta:
+        unique_together = ('question', 'language')
+
+    def __str__(self):
+        return f"{self.language} template for {self.question.title}"
