@@ -69,6 +69,7 @@ export default function SolveQuestion() {
   const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
   const [locked, setLocked] = useState(false);
   const [solved, setSolved] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const suspiciousCount = useRef(0);
   const resultRef = useRef(null);
@@ -77,10 +78,12 @@ export default function SolveQuestion() {
   const codeRef = useRef(code);
   const languageRef = useRef(language);
   const solvedRef = useRef(false);
+  const submittedRef = useRef(false);
 
   useEffect(() => { codeRef.current = code; }, [code]);
   useEffect(() => { languageRef.current = language; }, [language]);
   useEffect(() => { solvedRef.current = solved; }, [solved]);
+  useEffect(() => { submittedRef.current = submitted; }, [submitted]);
 
   const loadHistory = useCallback(() => {
     api.get(`/submissions/mine/?question=${id}`).then((res) => setHistory(res.data));
@@ -91,6 +94,7 @@ export default function SolveQuestion() {
       setQuestion(res.data);
       if (res.data.locked) setLocked(true);
       if (res.data.solved) setSolved(true);
+      if (res.data.submitted) setSubmitted(true);
       // LeetCode-style questions: the faculty provided per-language starter
       // stubs - students only write the logic, never the input handling.
       const tpls = res.data.code_templates || [];
@@ -118,8 +122,9 @@ export default function SolveQuestion() {
   // call. Any tab-switch/blur/fullscreen-exit signal calls this - only the
   // first one does anything, since after that the question is locked.
   const triggerAutoSubmit = useCallback(async (reason) => {
-    // Solved questions are in practice mode - leaving the page is allowed.
-    if (autoSubmittedRef.current || locked || solvedRef.current) return;
+    // After the one allowed submission the student is in practice mode -
+    // leaving the page is allowed.
+    if (autoSubmittedRef.current || locked || solvedRef.current || submittedRef.current) return;
     autoSubmittedRef.current = true;
     try {
       const res = await api.post('/submissions/auto-submit/', {
@@ -184,14 +189,15 @@ export default function SolveQuestion() {
     };
   }, [triggerAutoSubmit]);
 
-  // Enter fullscreen automatically, but only for an active attempt - solved
-  // (practice mode) and locked questions don't need the lockdown.
+  // Enter fullscreen automatically, but only for an active attempt - solved,
+  // already-submitted (practice mode), and locked questions don't need the
+  // lockdown.
   useEffect(() => {
-    if (!question || solved || locked) return;
+    if (!question || solved || submitted || locked) return;
     if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
     }
-  }, [question, solved, locked]);
+  }, [question, solved, submitted, locked]);
 
   const resumeFullscreen = () => {
     document.documentElement.requestFullscreen().catch(() => {});
@@ -204,13 +210,15 @@ export default function SolveQuestion() {
     setCode(templates[lang] ?? STARTER[lang] ?? '');
   };
 
-  // Once solved, the timer no longer applies - the question stays open for practice.
-  const timeExpired = !solved && remainingMs !== null && remainingMs <= 0;
+  // Once the one allowed submission is in, the timer no longer applies -
+  // the question stays open for practice.
+  const timeExpired = !solved && !submitted && remainingMs !== null && remainingMs <= 0;
 
   // Celebrate whenever a submission (normal or auto) comes back Accepted.
   // Guarded by submission id so this can only ever fire once per result, even
   // if the effect runs twice (React 18 StrictMode double-invokes effects in dev).
   useEffect(() => {
+    if (result?.id) setSubmitted(true);
     if (result?.status === 'Accepted') {
       setSolved(true);
       if (result.id !== celebratedIdRef.current) {
@@ -278,7 +286,7 @@ export default function SolveQuestion() {
           </div>
         </div>
       )}
-      {locked && !solved ? (
+      {locked && !solved && !submitted ? (
         <div className="fullscreen-gate">
           <div className="fullscreen-gate-card">
             <h3>Question Locked</h3>
@@ -290,7 +298,7 @@ export default function SolveQuestion() {
             <Link to="/student" className="btn btn-primary">Back to Questions</Link>
           </div>
         </div>
-      ) : !solved && !isFullscreen && (
+      ) : !solved && !submitted && !isFullscreen && (
         <div className="fullscreen-gate">
           <div className="fullscreen-gate-card">
             <h3>Fullscreen required</h3>
@@ -303,7 +311,7 @@ export default function SolveQuestion() {
       {/* During an active attempt there is no way back - leaving is a
           violation. The link appears once the student has submitted (any
           verdict) or the question is solved. */}
-      {(solved || result) && (
+      {(solved || submitted || result) && (
         <Link
           to="/student"
           className="back-link"
@@ -317,7 +325,11 @@ export default function SolveQuestion() {
         <div className="question-panel" onCopy={blockCopy} onContextMenu={blockCopy}>
           {solved ? (
             <div className="timer-banner timer-banner-solved">
-              ✅ Solved — practice mode: run and submit freely
+              ✅ Solved — practice mode: you can keep running your code
+            </div>
+          ) : submitted ? (
+            <div className="timer-banner timer-banner-submitted">
+              📝 Submitted — Not Solved. Reattempt freely; only your first submission counts.
             </div>
           ) : question.duration_minutes > 0 && remainingMs !== null && (
             <div className={`timer-banner ${timeExpired ? 'timer-banner-danger' : ''}`}>
@@ -382,11 +394,18 @@ export default function SolveQuestion() {
           />
 
           <div className="editor-actions">
-            <button className="btn btn-outline" onClick={handleRun} disabled={runLoading || timeExpired || (locked && !solved)}>
+            <button className="btn btn-outline" onClick={handleRun} disabled={runLoading || timeExpired || (locked && !solved && !submitted)}>
               {runLoading ? 'Running...' : '▶ Run (Sample)'}
             </button>
-            <button className="btn btn-primary" onClick={handleSubmit} disabled={submitLoading || timeExpired || (locked && !solved)}>
-              {submitLoading ? 'Submitting...' : timeExpired ? 'Time Expired' : 'Submit Code ▶'}
+            <button
+              className="btn btn-primary"
+              onClick={handleSubmit}
+              disabled={submitLoading || timeExpired || submitted || (locked && !solved)}
+            >
+              {submitLoading ? 'Submitting...'
+                : submitted ? 'Submitted ✓'
+                : timeExpired ? 'Time Expired'
+                : 'Submit Code ▶'}
             </button>
           </div>
 

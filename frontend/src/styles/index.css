@@ -417,6 +417,8 @@ form input:focus, form textarea:focus, form select:focus {
 }
 .timer-banner-danger { background: #fee2e2; color: var(--danger); }
 .timer-banner-solved { background: #dcfce7; color: #15803d; }
+.timer-banner-submitted { background: #fef3c7; color: #b45309; }
+.badge-submitted { background: #fef3c7; color: #b45309; }
 .sample-block {
   background: #f4f4fb;
   padding: 0.7rem 0.9rem;

@@ -45,17 +45,19 @@ export default function StudentDashboard() {
                 <h4>{q.title}</h4>
                 <span className={`badge badge-${q.difficulty.toLowerCase()}`}>{q.difficulty}</span>
               </div>
-              {q.locked ? (
-                <span className="badge badge-locked">⚠ Locked — Malpractice Detected</span>
-              ) : q.solved && (
+              {q.solved ? (
                 <span className="badge badge-solved">✓ Solved</span>
+              ) : q.submitted ? (
+                <span className="badge badge-submitted">📝 Submitted — Not Solved</span>
+              ) : q.locked && (
+                <span className="badge badge-locked">⚠ Locked — Malpractice Detected</span>
               )}
               <p className="muted">{q.description.slice(0, 110)}{q.description.length > 110 ? '...' : ''}</p>
               <p className="muted small">By {q.created_by_name}</p>
             </div>
             <div className="list-card-actions">
               <button className="btn btn-primary small" onClick={() => handleSolve(q.id)}>
-                {q.locked ? 'View (Locked)' : q.solved ? 'Reattempt →' : 'Solve →'}
+                {(q.solved || q.submitted) ? 'Reattempt →' : q.locked ? 'View (Locked)' : 'Solve →'}
               </button>
             </div>
           </div>

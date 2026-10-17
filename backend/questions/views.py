@@ -45,6 +45,10 @@ class StudentQuestionListView(generics.ListAPIView):
             Submission.objects.filter(student=self.request.user, status='Accepted')
             .values_list('question_id', flat=True)
         )
+        context['submitted_ids'] = set(
+            Submission.objects.filter(student=self.request.user)
+            .values_list('question_id', flat=True)
+        )
         # Read-only lookup - does NOT create QuestionAttempt rows, so browsing
         # the list doesn't prematurely start the clock on questions a student
         # hasn't opened yet.

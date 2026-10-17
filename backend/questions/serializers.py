@@ -67,6 +67,7 @@ class QuestionForStudentSerializer(serializers.ModelSerializer):
     started_at = serializers.DateTimeField(read_only=True, required=False)
     locked = serializers.SerializerMethodField()
     solved = serializers.SerializerMethodField()
+    submitted = serializers.SerializerMethodField()
     code_templates = StudentCodeTemplateSerializer(many=True, read_only=True)
 
     class Meta:
@@ -74,7 +75,7 @@ class QuestionForStudentSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'description', 'difficulty', 'sample_input',
                   'sample_output', 'created_by_name', 'created_at',
                   'time_limit_seconds', 'duration_minutes', 'started_at', 'locked', 'solved',
-                  'code_templates']
+                  'submitted', 'code_templates']
 
     def get_locked(self, obj):
         # List view supplies a precomputed set (see StudentQuestionListView);
@@ -92,4 +93,16 @@ class QuestionForStudentSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             from submissions.models import Submission
             return Submission.objects.filter(student=request.user, question=obj, status='Accepted').exists()
+        return False
+
+    def get_submitted(self, obj):
+        # Students get exactly one submission per question; `submitted` tells
+        # the UI to show Reattempt / "Submitted - Not Solved" states.
+        submitted_ids = self.context.get('submitted_ids')
+        if submitted_ids is not None:
+            return obj.id in submitted_ids
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            from submissions.models import Submission
+            return Submission.objects.filter(student=request.user, question=obj).exists()
         return False
