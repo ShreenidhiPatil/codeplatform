@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function CodeEditor({ value, onChange, language, onBlockedAction }) {
+export default function CodeEditor({ value, onChange, language, onBlockedAction, allowClipboard = false }) {
   const handleKeyDown = (e) => {
     if (e.key === 'Tab') {
       e.preventDefault();
@@ -13,7 +13,10 @@ export default function CodeEditor({ value, onChange, language, onBlockedAction 
     }
   };
 
+  // Copy/paste blocking is an anti-malpractice rule for students; faculty
+  // testing their own question (allowClipboard) are exempt.
   const block = (e) => {
+    if (allowClipboard) return;
     e.preventDefault();
     onBlockedAction?.();
   };

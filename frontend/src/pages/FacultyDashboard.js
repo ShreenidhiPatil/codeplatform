@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axios';
+import CodeEditor from '../components/CodeEditor';
 
 const TEMPLATE_LANGUAGES = ['python', 'c', 'java'];
+const LANGUAGE_LABELS = { python: 'Python 3', c: 'C', java: 'Java' };
 
 const emptyQuestion = {
   title: '', description: '', difficulty: 'Easy', sample_input: '', sample_output: '',
@@ -119,6 +121,43 @@ export default function FacultyDashboard() {
   const removeTemplate = (idx) => setForm({
     ...form, code_templates: form.code_templates.filter((_, i) => i !== idx),
   });
+
+  // --- "Test this question" panel: faculty write a solution and run it
+  // against the form's test cases before publishing. Uses the faculty-only
+  // endpoint - no attempt rows, no locking, no proctoring rules.
+  const [testLang, setTestLang] = useState('python');
+  const [testCode, setTestCode] = useState('');
+  const [testResult, setTestResult] = useState(null);
+  const [testLoading, setTestLoading] = useState(false);
+
+  const handleTestLangChange = (lang) => {
+    setTestLang(lang);
+    const tpl = form.code_templates.find((t) => t.language === lang);
+    setTestCode(tpl?.starter_code || '');
+  };
+
+  const runQuestionTest = async () => {
+    setTestLoading(true);
+    setTestResult(null);
+    try {
+      const tpl = form.code_templates.find((t) => t.language === testLang);
+      const res = await api.post('/submissions/faculty-test/', {
+        code: testCode,
+        language: testLang,
+        test_cases: form.test_cases,
+        time_limit_seconds: form.time_limit_seconds,
+        driver_code: tpl?.driver_code || '',
+      });
+      setTestResult(res.data);
+    } catch (err) {
+      setTestResult({
+        status: 'Error',
+        result_detail: err.response?.data?.detail || JSON.stringify(err.response?.data || {}),
+      });
+    } finally {
+      setTestLoading(false);
+    }
+  };
 
   const resetForm = () => { setForm(emptyQuestion); setEditingId(null); setShowForm(false); };
 
@@ -319,6 +358,39 @@ export default function FacultyDashboard() {
             <button type="button" className="btn btn-outline small" onClick={addTemplate}>
               + Add language template
             </button>
+          )}
+
+          <h4>Test this question (optional)</h4>
+          <p className="muted small">
+            Write a solution and run it against the test cases above to make sure the question is
+            solvable before publishing. If you added a code template for the selected language, write
+            only the logic — your hidden driver is applied automatically. Nothing here is saved.
+          </p>
+          <div className="editor-toolbar">
+            <select value={testLang} onChange={(e) => handleTestLangChange(e.target.value)}>
+              {TEMPLATE_LANGUAGES.map((l) => (
+                <option key={l} value={l}>{LANGUAGE_LABELS[l]}</option>
+              ))}
+            </select>
+          </div>
+          <CodeEditor value={testCode} onChange={setTestCode} language={testLang} allowClipboard />
+          <button
+            type="button"
+            className="btn btn-outline small"
+            style={{ marginTop: '0.6rem' }}
+            onClick={runQuestionTest}
+            disabled={testLoading}
+          >
+            {testLoading ? 'Running...' : '▶ Run against test cases'}
+          </button>
+          {testResult && (
+            <div className={`result-box result-${testResult.status?.replace(' ', '-').toLowerCase()}`}>
+              <h4>Test Result</h4>
+              {testResult.passed_count !== undefined && (
+                <p>{testResult.passed_count} / {testResult.total_count} test cases passed</p>
+              )}
+              <pre>{testResult.result_detail}</pre>
+            </div>
           )}
 
           <button className="btn btn-primary full-width" style={{ marginTop: '1.2rem' }}>

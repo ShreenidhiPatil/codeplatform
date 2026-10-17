@@ -241,6 +241,53 @@ class IsFacultyOrAdmin(BasePermission):
         return user.role == 'faculty' and user.is_approved
 
 
+class FacultyTestRunView(APIView):
+    """
+    Lets faculty write and test a solution while composing a question in the
+    dashboard form - before anything is saved. The draft's test cases (and
+    optional hidden driver code) come straight from the request, and none of
+    the student-side rules apply: no attempt rows, no deadline, no locking,
+    no violation logging, and nothing is stored.
+    """
+    permission_classes = [IsFacultyOrAdmin]
+
+    def post(self, request):
+        code = request.data.get('code') or ''
+        language = request.data.get('language') or 'python'
+        driver_code = request.data.get('driver_code') or ''
+        try:
+            time_limit = int(request.data.get('time_limit_seconds') or DEFAULT_TIME_LIMIT_SECONDS)
+        except (TypeError, ValueError):
+            time_limit = DEFAULT_TIME_LIMIT_SECONDS
+        time_limit = max(1, min(time_limit, 30))
+
+        if not code.strip():
+            return Response({'detail': 'Write some code to test first.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        test_cases = [
+            {'input_data': tc.get('input_data', ''), 'expected_output': tc.get('expected_output', '')}
+            for tc in request.data.get('test_cases', [])
+            if isinstance(tc, dict) and (tc.get('expected_output') or '').strip()
+        ]
+        if not test_cases:
+            return Response(
+                {'detail': 'Add at least one test case with an expected output before testing.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if driver_code.strip():
+            if '{{USER_CODE}}' in driver_code:
+                full_code = driver_code.replace('{{USER_CODE}}', code)
+            else:
+                full_code = f"{code}\n\n{driver_code}"
+        else:
+            full_code = code
+
+        verdict, detail, passed, total = run_against_test_cases(full_code, language, test_cases, time_limit)
+        return Response({'status': verdict, 'result_detail': detail,
+                         'passed_count': passed, 'total_count': total})
+
+
 class ViolationsListView(APIView):
     """
     Faculty-facing malpractice log: every submission that was auto-submitted

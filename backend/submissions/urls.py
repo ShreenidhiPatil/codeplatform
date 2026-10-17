@@ -10,11 +10,13 @@ from .views import (
     AutoSubmitView,
     ViolationsListView,
     UnlockAttemptView,
+    FacultyTestRunView,
 )
 
 urlpatterns = [
     path('submit/', SubmitCodeView.as_view(), name='submit_code'),
     path('run/', RunCodeView.as_view(), name='run_code'),
+    path('faculty-test/', FacultyTestRunView.as_view(), name='faculty_test_run'),
     path('auto-submit/', AutoSubmitView.as_view(), name='auto_submit_code'),
     path('mine/', MySubmissionsView.as_view(), name='my_submissions'),
     path('leaderboard/', LeaderboardView.as_view(), name='leaderboard'),

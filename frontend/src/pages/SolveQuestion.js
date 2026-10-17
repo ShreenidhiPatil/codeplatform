@@ -301,8 +301,9 @@ export default function SolveQuestion() {
       )}
 
       {/* During an active attempt there is no way back - leaving is a
-          violation. The link returns once the question is solved. */}
-      {solved && (
+          violation. The link appears once the student has submitted (any
+          verdict) or the question is solved. */}
+      {(solved || result) && (
         <Link
           to="/student"
           className="back-link"
