@@ -330,7 +330,7 @@ export default function FacultyDashboard() {
                   <tr>
                     <th>Rank</th>
                     <th>Student</th>
-                    <th>Roll No.</th>
+                    <th>SRN</th>
                     <th>Solved At</th>
                   </tr>
                 </thead>
@@ -353,7 +353,7 @@ export default function FacultyDashboard() {
                   <tr>
                     <th>Rank</th>
                     <th>Student</th>
-                    <th>Roll No.</th>
+                    <th>SRN</th>
                     <th>Solved</th>
                     <th>Last Solve</th>
                   </tr>
@@ -386,7 +386,7 @@ export default function FacultyDashboard() {
                 <thead>
                   <tr>
                     <th>Student</th>
-                    <th>Roll No.</th>
+                    <th>SRN</th>
                     <th>Question</th>
                     <th>Violation</th>
                     <th>When</th>

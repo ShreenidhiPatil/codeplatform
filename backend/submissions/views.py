@@ -396,7 +396,7 @@ class DownloadLeaderboardExcelView(APIView):
             "Rank",
             "Question",
             "Student",
-            "Roll Number",
+            "SRN",
             "Passed Test Cases",
             "Total Test Cases",
             "Status",

@@ -95,7 +95,7 @@ export default function AdminDashboard() {
               <div>
                 <h4>{u.username}</h4>
                 <p>{u.email}</p>
-                <p className="muted">Roll No: {u.roll_number || '—'}</p>
+                <p className="muted">SRN: {u.roll_number || '—'}</p>
               </div>
               <div className="list-card-actions">
                 <button className="btn btn-outline small danger" onClick={() => remove(u.id)}>Remove</button>

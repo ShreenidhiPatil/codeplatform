@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 
@@ -15,11 +16,19 @@ class UserSerializer(serializers.ModelSerializer):
 
 class StudentSignupSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)
+    # Shown to students as "SRN" (Student Registration Number); the model
+    # field keeps its original roll_number name.
+    roll_number = serializers.CharField(
+        required=True, allow_blank=False, max_length=50, label='SRN',
+        validators=[UniqueValidator(
+            queryset=User.objects.all(),
+            message='A student with this SRN already exists.',
+        )],
+    )
 
     class Meta:
         model = User
         fields = ['username', 'email', 'first_name', 'last_name', 'password', 'roll_number']
-        extra_kwargs = {'roll_number': {'required': True, 'allow_blank': False}}
 
     def create(self, validated_data):
         password = validated_data.pop('password')

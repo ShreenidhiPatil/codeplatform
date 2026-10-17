@@ -52,8 +52,8 @@ export default function StudentSignup() {
             <input name="last_name" onChange={handleChange} />
           </div>
         </div>
-        <label>Roll Number</label>
-        <input name="roll_number" onChange={handleChange} required />
+        <label>SRN</label>
+        <input name="roll_number" placeholder="e.g. PES1UG24CS001" onChange={handleChange} required />
         <label>Password</label>
         <input name="password" type="password" onChange={handleChange} required />
 
